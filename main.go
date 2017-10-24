@@ -4,6 +4,7 @@ import (
 	_ "expvar"
 	"net/http"
 
+	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
 
@@ -17,7 +18,14 @@ func init() {
 	logrus.SetFormatter(&logrus.JSONFormatter{})
 }
 
+func newRouter() *mux.Router {
+	r := mux.NewRouter()
+	r.Handle("/debug/vars", http.DefaultServeMux)
+	return r
+}
+
 func main() {
 	log.Info("Starting up the search service.")
-	log.Fatal(http.ListenAndServe(":60000", nil))
+	r := newRouter()
+	log.Fatal(http.ListenAndServe(":60000", r))
 }
