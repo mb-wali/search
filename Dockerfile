@@ -1,8 +1,8 @@
 FROM discoenv/golang-base:master
 
-#ENV CONF_TEMPLATE=/go/src/github.com/cyverse-de/search/jobservices.yml.tmpl
-#ENV CONF_FILENAME=jobservices.yml
-#ENV PROGRAM=search
+ENV CONF_TEMPLATE=/go/src/github.com/cyverse-de/search/search.yaml.tmpl
+ENV CONF_FILENAME=search.yaml
+ENV PROGRAM=search
 
 ARG git_commit=unknown
 ARG version="2.9.0"
@@ -14,9 +14,6 @@ LABEL org.cyverse.descriptive-version="$descriptive_version"
 
 COPY . /go/src/github.com/cyverse-de/search
 RUN go install -v -ldflags="-X main.appver=$version -X main.gitref=$git_commit" github.com/cyverse-de/search
-
-# Remove when there's an actual config file and such set up
-ENTRYPOINT ["/go/bin/search"]
 
 EXPOSE 60000
 LABEL org.label-schema.vcs-ref="$git_commit"
