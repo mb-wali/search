@@ -72,6 +72,14 @@
 			"notests": true
 		},
 		{
+			"importpath": "github.com/cyverse-de/querydsl",
+			"repository": "https://github.com/cyverse-de/querydsl",
+			"vcs": "git",
+			"revision": "dfe0a71a8ef681c198dbcf5c4f37515569b79886",
+			"branch": "master",
+			"notests": true
+		},
+		{
 			"importpath": "github.com/fsnotify/fsnotify",
 			"repository": "https://github.com/fsnotify/fsnotify",
 			"vcs": "git",
@@ -281,6 +289,24 @@
 			"notests": true
 		},
 		{
+			"importpath": "golang.org/x/net/context",
+			"repository": "https://go.googlesource.com/net",
+			"vcs": "git",
+			"revision": "4b14673ba32bee7f5ac0f990a48f033919fd418b",
+			"branch": "master",
+			"path": "/context",
+			"notests": true
+		},
+		{
+			"importpath": "golang.org/x/sync/errgroup",
+			"repository": "https://go.googlesource.com/sync",
+			"vcs": "git",
+			"revision": "8e0aa688b654ef28caa72506fa5ec8dba9fc7690",
+			"branch": "master",
+			"path": "/errgroup",
+			"notests": true
+		},
+		{
 			"importpath": "golang.org/x/sys/unix",
 			"repository": "https://go.googlesource.com/sys",
 			"vcs": "git",
@@ -350,6 +376,14 @@
 			"revision": "6eab0e8f74e86c598ec3b6fad4888e0c11482d48",
 			"branch": "master",
 			"path": "/unicode/norm",
+			"notests": true
+		},
+		{
+			"importpath": "gopkg.in/olivere/elastic.v5",
+			"repository": "https://gopkg.in/olivere/elastic.v5",
+			"vcs": "git",
+			"revision": "3f891f0d04aba0bba9a8bd365a9d3846efcb3527",
+			"branch": "master",
 			"notests": true
 		},
 		{
