@@ -4,6 +4,8 @@ import (
 	_ "expvar"
 	"net/http"
 
+	"github.com/cyverse-de/search/data"
+
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
 )
@@ -21,6 +23,8 @@ func init() {
 func newRouter() *mux.Router {
 	r := mux.NewRouter()
 	r.Handle("/debug/vars", http.DefaultServeMux)
+	data.RegisterRoutes(r.PathPrefix("/data/").Subrouter())
+
 	return r
 }
 
