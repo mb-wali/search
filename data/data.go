@@ -3,12 +3,15 @@ package data
 import (
 	"encoding/json"
 	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
 	"net/http"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause/label"
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
+
+	"github.com/cyverse-de/search/elasticsearch"
 )
 
 var qd = querydsl.New()
@@ -26,6 +29,6 @@ func GetAllDocumentationHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(docs)
 }
 
-func RegisterRoutes(r *mux.Router) {
+func RegisterRoutes(r *mux.Router, e *elasticsearch.Elasticer, log *logrus.Entry) {
 	r.HandleFunc("/documentation", GetAllDocumentationHandler)
 }

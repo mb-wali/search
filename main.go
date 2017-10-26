@@ -9,6 +9,7 @@ import (
 	"github.com/spf13/viper"
 
 	"github.com/cyverse-de/search/data"
+	"github.com/cyverse-de/search/elasticsearch"
 
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -38,10 +39,10 @@ func loadConfig(cfgPath string) {
 	}
 }
 
-func newRouter() *mux.Router {
+func newRouter(e *elasticsearch.Elasticer) *mux.Router {
 	r := mux.NewRouter()
 	r.Handle("/debug/vars", http.DefaultServeMux)
-	data.RegisterRoutes(r.PathPrefix("/data/").Subrouter())
+	data.RegisterRoutes(r.PathPrefix("/data/").Subrouter(), e, log)
 
 	return r
 }
@@ -49,7 +50,12 @@ func newRouter() *mux.Router {
 func main() {
 	log.Info("Starting up the search service.")
 	loadConfig(*cfgPath)
-	r := newRouter()
+	e, err := elasticsearch.NewElasticer(cfg.GetString("elasticsearch.base"), cfg.GetString("elasticsearch.user"), cfg.GetString("elasticsearch.password"), cfg.GetString("elasticsearch.index"))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	r := newRouter(e)
 	listenPortSpec := ":" + "60000"
 	log.Infof("Listening on %s", listenPortSpec)
 	log.Fatal(http.ListenAndServe(listenPortSpec, r))
