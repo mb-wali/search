@@ -46,9 +46,18 @@ func logAndOutputErr(log *logrus.Entry, err error, out *json.Encoder) {
 
 func GetSearchHandler(e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
-		var v map[string]interface{}
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		out := json.NewEncoder(w)
+
+		queries := r.URL.Query()
+		user := queries.Get("user")
+		if user == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			logAndOutputString(log, "The 'user' query parameter must be provided and non-empty", out)
+			return
+		}
+
+		var v map[string]interface{}
 		err := json.NewDecoder(r.Body).Decode(&v)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
