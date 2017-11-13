@@ -10,6 +10,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/label"
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
+	"github.com/cyverse-de/querydsl/clause/permissions"
 )
 
 func PrintDocumentation(qd *querydsl.QueryDSL) error {
@@ -32,6 +33,7 @@ func main() {
 	label.Register(qd)
 	path.Register(qd)
 	owner.Register(qd)
+	permissions.Register(qd)
 
 	err := PrintDocumentation(qd)
 	if err != nil {
@@ -40,8 +42,9 @@ func main() {
 	}
 
 	var jsonBlob = []byte(`{
-		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}],
-		"any": [{"type": "owner", "args": {"owner": "ipctest"}}]
+		"all": [{"type": "path", "args": {"prefix": "/iplant/home"}}, {"type": "label", "args": {"label": "PDAP.fel.tree"}}, {"type": "permissions", "args": {"users": ["mian", "ipctest#iplant", "foo#bar", "baz"], "permission": "write"}}],
+		"any": [{"type": "owner", "args": {"owner": "ipctest"}}],
+		"none": [{"type": "permissions", "args": {"permission": "read", "users": ["mian#iplant", "ipctest#iplant"]}}]
 	}`)
 	var query querydsl.Query
 	err = json.Unmarshal(jsonBlob, &query)
