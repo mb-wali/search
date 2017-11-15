@@ -42,7 +42,7 @@ func loadConfig(cfgPath string) {
 func newRouter(e *elasticsearch.Elasticer) *mux.Router {
 	r := mux.NewRouter()
 	r.Handle("/debug/vars", http.DefaultServeMux)
-	data.RegisterRoutes(r.PathPrefix("/data/").Subrouter(), e, log)
+	data.RegisterRoutes(r.PathPrefix("/data/").Subrouter(), cfg, e, log)
 
 	return r
 }

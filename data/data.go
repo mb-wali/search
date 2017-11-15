@@ -3,9 +3,13 @@ package data
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
+	"io"
 	"net/http"
+	"net/url"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause/label"
@@ -46,7 +50,30 @@ func logAndOutputErr(log *logrus.Entry, err error, out *json.Encoder) {
 	})
 }
 
-func GetSearchHandler(e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
+// getUserGroups fetches the user and its groups with qualified names from data-info, returning the list of users, the response raw if it was non-200, and any error. In a non-failing case, only the first returned value will be non-nil.
+func getUserGroups(cfg *viper.Viper, user string) ([]string, *http.Response, error) {
+	userinfourl := fmt.Sprintf("%s/users/%s/groups?user=%s", cfg.GetString("data_info.base"), url.PathEscape(user), url.QueryEscape(user))
+	resp, err := http.Get(userinfourl)
+	if err != nil {
+		return nil, nil, err
+	}
+	if resp.StatusCode != 200 {
+		return nil, resp, nil
+	}
+	defer resp.Body.Close()
+
+	var decoded struct {
+		User   string
+		Groups []string
+	}
+	err = json.NewDecoder(resp.Body).Decode(&decoded)
+	if err != nil {
+		return nil, nil, err
+	}
+	return append(decoded.Groups, decoded.User), nil, nil
+}
+
+func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		out := json.NewEncoder(w)
@@ -80,6 +107,23 @@ func GetSearchHandler(e *elasticsearch.Elasticer, log *logrus.Entry) func(http.R
 			logAndOutputErr(log, err, out)
 			return
 		}
+
+		users, ur, err := getUserGroups(cfg, user)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			logAndOutputErr(log, err, out)
+			return
+		}
+		if ur != nil {
+			// passing along the response
+			defer ur.Body.Close()
+			w.WriteHeader(ur.StatusCode)
+			io.Copy(w, ur.Body)
+			return
+		}
+
+		clauses.All = append(clauses.All, &querydsl.GenericClause{Clause: &querydsl.Clause{Type: "permissions", Args: map[string]interface{}{"users": users, "permission": "read", "permission_recurse": true, "exact": true}}})
+
 		translated, err := clauses.Translate(qd)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
@@ -98,7 +142,7 @@ func GetSearchHandler(e *elasticsearch.Elasticer, log *logrus.Entry) func(http.R
 	}
 }
 
-func RegisterRoutes(r *mux.Router, e *elasticsearch.Elasticer, log *logrus.Entry) {
+func RegisterRoutes(r *mux.Router, cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) {
 	r.HandleFunc("/documentation", GetAllDocumentationHandler)
-	r.Path("/search").Methods("POST").HeadersRegexp("Content-Type", "application/json.*").HandlerFunc(GetSearchHandler(e, log))
+	r.Path("/search").Methods("POST").HeadersRegexp("Content-Type", "application/json.*").HandlerFunc(GetSearchHandler(cfg, e, log))
 }

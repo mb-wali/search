@@ -6,4 +6,9 @@ elasticsearch:
   {{ with $v := (key (printf "%s/elasticsearch/password" $base)) }}password: "{{ $v }}"{{ end }}
   {{ with $v := (key (printf "%s/elasticsearch/data-alias" $base)) }}index: "{{ $v }}"{{ end }}
 {{- end }}
+
+{{- if tree (printf "%s/data-info" $base) }}
+data_info:
+  {{ with $v := (key (printf "%s/data-info/base" $base)) }}base: "{{ $v }}"{{ end }}
+{{- end }}
 {{- end -}}
