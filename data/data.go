@@ -52,7 +52,8 @@ func logAndOutputErr(log *logrus.Entry, err error, out *json.Encoder) {
 
 // getUserGroups fetches the user and its groups with qualified names from data-info, returning the list of users, the response raw if it was non-200, and any error. In a non-failing case, only the first returned value will be non-nil.
 func getUserGroups(cfg *viper.Viper, user string) ([]string, *http.Response, error) {
-	userinfourl := fmt.Sprintf("%s/users/%s/groups?user=%s", cfg.GetString("data_info.base"), url.PathEscape(user), url.QueryEscape(user))
+	// XXX: go 1.9: use url.PathEscape
+	userinfourl := fmt.Sprintf("%s/users/%s/groups?user=%s", cfg.GetString("data_info.base"), user, url.QueryEscape(user))
 	resp, err := http.Get(userinfourl)
 	if err != nil {
 		return nil, nil, err
