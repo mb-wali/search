@@ -36,6 +36,7 @@ import (
 	"encoding/base64"
 	"reflect"
 	"strconv"
+	"time"
 	"unicode"
 	"unicode/utf16"
 	"unicode/utf8"
@@ -272,6 +273,21 @@ func (e *jsonEncDriver) EncodeNil() {
 	// }
 }
 
+func (e *jsonEncDriver) EncodeTime(t time.Time) {
+	// Do NOT use MarshalJSON, as it allocates internally.
+	// instead, we call AppendFormat directly, using our scratch buffer (e.b)
+	if t.IsZero() {
+		e.EncodeNil()
+	} else {
+		e.b[0] = '"'
+		b := t.AppendFormat(e.b[1:1], time.RFC3339Nano)
+		e.b[len(b)+1] = '"'
+		e.w.writeb(e.b[:len(b)+2])
+	}
+	// fmt.Printf(">>>> time as a string: '%s'\n", e.b[:len(b)+2])
+	// v, err := t.MarshalJSON(); if err != nil { e.e.error(err) } e.w.writeb(v)
+}
+
 func (e *jsonEncDriver) EncodeBool(b bool) {
 	if e.h.MapKeyAsString && e.c == containerMapKey {
 		if b {
@@ -375,11 +391,16 @@ func (e *jsonEncDriver) EncodeSymbol(v string) {
 
 func (e *jsonEncDriver) EncodeStringBytes(c charEncoding, v []byte) {
 	// if encoding raw bytes and RawBytesExt is configured, use it to encode
-	if c == c_RAW && e.se.i != nil {
-		e.EncodeExt(v, 0, &e.se, e.e)
+	if v == nil {
+		e.EncodeNil()
 		return
 	}
-	if c == c_RAW {
+	if c == cRAW {
+		if e.se.i != nil {
+			e.EncodeExt(v, 0, &e.se, e.e)
+			return
+		}
+
 		slen := base64.StdEncoding.EncodedLen(len(v))
 		if cap(e.bs) >= slen {
 			e.bs = e.bs[:slen]
@@ -491,7 +512,7 @@ type jsonDecDriver struct {
 	fnull bool // found null from appendStringAsBytes
 
 	bstr [8]byte  // scratch used for string \UXXX parsing
-	b    [64]byte // scratch, used for parsing strings or numbers
+	b    [64]byte // scratch, used for parsing strings or numbers or time.Time
 	b2   [64]byte // scratch, used only for decodeBytes (after base64)
 	bs   []byte   // scratch. Initialized from b. Used for parsing strings or numbers.
 
@@ -636,7 +657,7 @@ func (d *jsonDecDriver) TryDecodeAsNil() bool {
 	// TODO: we shouldn't try to see if "null" was here, right?
 	// only "null" denotes a nil
 	if d.tok == 'n' {
-		d.readLit(3, jsonLitNull+1) // ull
+		d.readLit(3, jsonLitNull+1) // (n)ull
 		return true
 	}
 	return false
@@ -652,10 +673,10 @@ func (d *jsonDecDriver) DecodeBool() (v bool) {
 	}
 	switch d.tok {
 	case 'f':
-		d.readLit(4, jsonLitFalse+1) // alse
+		d.readLit(4, jsonLitFalse+1) // (f)alse
 		// v = false
 	case 't':
-		d.readLit(3, jsonLitTrue+1) // rue
+		d.readLit(3, jsonLitTrue+1) // (t)rue
 		v = true
 	default:
 		d.d.errorf("json: decode bool: got first char %c", d.tok)
@@ -663,6 +684,19 @@ func (d *jsonDecDriver) DecodeBool() (v bool) {
 	}
 	if fquot {
 		d.r.readn1()
+	}
+	return
+}
+
+func (d *jsonDecDriver) DecodeTime() (t time.Time) {
+	// read string, and pass the string into json.unmarshal
+	d.appendStringAsBytes()
+	if d.fnull {
+		return
+	}
+	t, err := time.Parse(time.RFC3339, stringView(d.bs))
+	if err != nil {
+		d.d.error(err)
 	}
 	return
 }
@@ -756,6 +790,14 @@ func (d *jsonDecDriver) DecodeBytes(bs []byte, zerocopy bool) (bsOut []byte) {
 		d.DecodeExt(&bsOut, 0, &d.se)
 		return
 	}
+	if d.tok == 0 {
+		d.tok = d.r.skip(&jsonCharWhitespaceSet)
+	}
+	// check if an "array" of uint8's (see ContainerType for how to infer if an array)
+	if d.tok == '[' {
+		bsOut, _ = fastpathTV.DecSliceUint8V(bs, true, d.d)
+		return
+	}
 	d.appendStringAsBytes()
 	// base64 encodes []byte{} as "", and we encode nil []byte as null.
 	// Consequently, base64 should decode null as a nil []byte, and "" as an empty []byte{}.
@@ -808,15 +850,15 @@ func (d *jsonDecDriver) appendStringAsBytes() {
 		// handle non-string scalar: null, true, false or a number
 		switch d.tok {
 		case 'n':
-			d.readLit(3, jsonLitNull+1) // ull
+			d.readLit(3, jsonLitNull+1) // (n)ull
 			d.bs = d.bs[:0]
 			d.fnull = true
 		case 'f':
-			d.readLit(4, jsonLitFalse+1) // alse
+			d.readLit(4, jsonLitFalse+1) // (f)alse
 			d.bs = d.bs[:5]
 			copy(d.bs, "false")
 		case 't':
-			d.readLit(3, jsonLitTrue+1) // rue
+			d.readLit(3, jsonLitTrue+1) // (t)rue
 			d.bs = d.bs[:4]
 			copy(d.bs, "true")
 		default:
@@ -963,14 +1005,14 @@ func (d *jsonDecDriver) DecodeNaked() {
 	}
 	switch d.tok {
 	case 'n':
-		d.readLit(3, jsonLitNull+1) // ull
+		d.readLit(3, jsonLitNull+1) // (n)ull
 		z.v = valueTypeNil
 	case 'f':
-		d.readLit(4, jsonLitFalse+1) // alse
+		d.readLit(4, jsonLitFalse+1) // (f)alse
 		z.v = valueTypeBool
 		z.b = false
 	case 't':
-		d.readLit(3, jsonLitTrue+1) // rue
+		d.readLit(3, jsonLitTrue+1) // (t)rue
 		z.v = valueTypeBool
 		z.b = true
 	case '{':
@@ -1093,6 +1135,7 @@ type JsonHandle struct {
 
 func (h *JsonHandle) hasElemSeparators() bool { return true }
 
+// SetInterfaceExt sets an extension
 func (h *JsonHandle) SetInterfaceExt(rt reflect.Type, tag uint64, ext InterfaceExt) (err error) {
 	return h.SetExt(rt, tag, &setExtWrapper{i: ext})
 }

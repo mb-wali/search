@@ -2,8 +2,9 @@
 // Use of this source code is governed by a MIT license found in the LICENSE file.
 
 /*
-High Performance, Feature-Rich Idiomatic Go 1.4+ codec/encoding library for
-binc, msgpack, cbor, json
+Package codec provides a
+High Performance, Feature-Rich Idiomatic Go 1.4+ codec/encoding library
+for binc, msgpack, cbor, json.
 
 Supported Serialization formats are:
 
@@ -109,7 +110,7 @@ This symmetry is important to reduce chances of issues happening because the
 encoding and decoding sides are out of sync e.g. decoded via very specific
 encoding.TextUnmarshaler but encoded via kind-specific generalized mode.
 
-Consequently, if a type only defines one-half of the symetry
+Consequently, if a type only defines one-half of the symmetry
 (e.g. it implements UnmarshalJSON() but not MarshalJSON() ),
 then that type doesn't satisfy the check and we will continue walking down the
 decision tree.
@@ -201,6 +202,19 @@ Running Benchmarks
 
 Please see http://github.com/ugorji/go-codec-bench .
 
+Caveats
+
+Struct fields matching the following are ignored during encoding and decoding
+    - struct tag value set to -
+    - func, complex numbers, unsafe pointers
+    - unexported and not embedded
+    - unexported embedded non-struct
+    - unexported embedded pointers (from go1.10)
+
+Every other field in a struct will be encoded/decoded.
+
+Embedded fields are encoded as if they exist in the top-level struct,
+with some caveats. See Encode documentation.
+
 */
 package codec
-
