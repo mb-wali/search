@@ -75,7 +75,7 @@
 			"importpath": "github.com/cyverse-de/querydsl",
 			"repository": "https://github.com/cyverse-de/querydsl",
 			"vcs": "git",
-			"revision": "d63a1fd3854ef5ae3dad627e720a21ef7e3dd5a7",
+			"revision": "c51260b57c5809d650b656165af080953ed6da32",
 			"branch": "master",
 			"notests": true
 		},
