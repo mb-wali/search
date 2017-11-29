@@ -51,10 +51,17 @@ func logAndOutputErr(log *logrus.Entry, err error, out *json.Encoder) {
 }
 
 // getUserGroups fetches the user and its groups with qualified names from data-info, returning the list of users, the response raw if it was non-200, and any error. In a non-failing case, only the first returned value will be non-nil.
-func getUserGroups(cfg *viper.Viper, user string) ([]string, *http.Response, error) {
+func getUserGroups(ctx context.Context, cfg *viper.Viper, user string) ([]string, *http.Response, error) {
 	// XXX: go 1.9: use url.PathEscape
 	userinfourl := fmt.Sprintf("%s/users/%s/groups?user=%s", cfg.GetString("data_info.base"), user, url.QueryEscape(user))
-	resp, err := http.Get(userinfourl)
+	req, err := http.NewRequest("GET", userinfourl, nil)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	req = req.WithContext(ctx)
+
+	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -76,6 +83,9 @@ func getUserGroups(cfg *viper.Viper, user string) ([]string, *http.Response, err
 
 func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+
 		w.Header().Set("Content-Type", "application/json; charset=utf-8")
 		out := json.NewEncoder(w)
 
@@ -109,7 +119,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			return
 		}
 
-		users, ur, err := getUserGroups(cfg, user)
+		users, ur, err := getUserGroups(ctx, cfg, user)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
@@ -125,13 +135,13 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 
 		clauses.All = append(clauses.All, &querydsl.GenericClause{Clause: &querydsl.Clause{Type: "permissions", Args: map[string]interface{}{"users": users, "permission": "read", "permission_recurse": true, "exact": true}}})
 
-		translated, err := clauses.Translate(context.TODO(), qd)
+		translated, err := clauses.Translate(ctx, qd)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
 			return
 		}
-		res, err := e.Es.Search().Query(translated).Do(context.TODO())
+		res, err := e.Es.Search().Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
