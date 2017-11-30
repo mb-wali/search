@@ -1,3 +1,4 @@
+// Package elasticsearch contains simple wrappers for the elastic library for use in this service
 package elasticsearch
 
 import (
