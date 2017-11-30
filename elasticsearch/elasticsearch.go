@@ -30,6 +30,7 @@ func NewElasticer(elasticsearchBase string, user string, password string, elasti
 	return &Elasticer{Es: c, baseURL: elasticsearchBase, index: elasticsearchIndex}, nil
 }
 
+// Close calls out to the Stop method of the underlying elastic.Client
 func (e *Elasticer) Close() {
 	e.Es.Stop()
 }

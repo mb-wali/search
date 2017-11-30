@@ -1,3 +1,4 @@
+// Package data contains handlers and logic for data searches for the CyVerse data store
 package data
 
 import (
@@ -29,6 +30,7 @@ func init() {
 	permissions.Register(qd)
 }
 
+// GetAllDocumentationHandler outputs documentation from the QueryDSL instance as JSON.
 func GetAllDocumentationHandler(w http.ResponseWriter, r *http.Request) {
 	docs := make(map[string]interface{})
 	docs["clauses"] = qd.GetDocumentation()
@@ -81,6 +83,7 @@ func getUserGroups(ctx context.Context, cfg *viper.Viper, user string) ([]string
 	return append(decoded.Groups, decoded.User), nil, nil
 }
 
+// GetSearchHandler returns a function which performs searches after translating an input query
 func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		ctx, cancel := context.WithCancel(context.Background())
@@ -153,6 +156,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 	}
 }
 
+// RegisterRoutes registers the routes associated with this package to the provided router
 func RegisterRoutes(r *mux.Router, cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) {
 	r.HandleFunc("/documentation", GetAllDocumentationHandler)
 	r.Path("/search").Methods("POST").HeadersRegexp("Content-Type", "application/json.*").HandlerFunc(GetSearchHandler(cfg, e, log))
