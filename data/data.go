@@ -144,7 +144,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			logAndOutputErr(log, err, out)
 			return
 		}
-		res, err := e.Es.Search().Query(translated).Do(ctx)
+		res, err := e.Es.Search().Index(e.Index).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)

@@ -11,7 +11,7 @@ type Elasticer struct {
 	baseURL  string
 	user     string
 	password string
-	index    string
+	Index    string
 }
 
 // NewElasticer returns a pointer to an Elasticer instance that has already tested its connection
@@ -28,7 +28,7 @@ func NewElasticer(elasticsearchBase string, user string, password string, elasti
 		return nil, err
 	}
 
-	return &Elasticer{Es: c, baseURL: elasticsearchBase, index: elasticsearchIndex}, nil
+	return &Elasticer{Es: c, baseURL: elasticsearchBase, Index: elasticsearchIndex}, nil
 }
 
 // Close calls out to the Stop method of the underlying elastic.Client
