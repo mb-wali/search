@@ -54,6 +54,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer e.Close()
 
 	r := newRouter(e)
 	listenPortSpec := ":" + "60000"
