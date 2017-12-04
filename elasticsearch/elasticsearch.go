@@ -7,11 +7,11 @@ import (
 
 // Elasticer is a type used to interact with Elasticsearch
 type Elasticer struct {
-	Es       *elastic.Client
+	es       *elastic.Client
 	baseURL  string
 	user     string
 	password string
-	Index    string
+	index    string
 }
 
 // NewElasticer returns a pointer to an Elasticer instance that has already tested its connection
@@ -28,10 +28,15 @@ func NewElasticer(elasticsearchBase string, user string, password string, elasti
 		return nil, err
 	}
 
-	return &Elasticer{Es: c, baseURL: elasticsearchBase, Index: elasticsearchIndex}, nil
+	return &Elasticer{es: c, baseURL: elasticsearchBase, index: elasticsearchIndex}, nil
+}
+
+// Search returns an *elastic.SearchService set to the right index, for further use
+func (e *Elasticer) Search() *elastic.SearchService {
+	return e.es.Search().Index(e.index)
 }
 
 // Close calls out to the Stop method of the underlying elastic.Client
 func (e *Elasticer) Close() {
-	e.Es.Stop()
+	e.es.Stop()
 }
