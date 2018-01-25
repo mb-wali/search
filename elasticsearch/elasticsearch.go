@@ -23,7 +23,7 @@ func NewElasticer(elasticsearchBase string, user string, password string, elasti
 		return nil, err
 	}
 
-	err = c.WaitForGreenStatus("10s")
+	err = c.WaitForYellowStatus("10s")
 	if err != nil {
 		return nil, err
 	}
