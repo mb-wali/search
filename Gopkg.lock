@@ -20,7 +20,7 @@
     "clause/permissions",
     "clauseutils"
   ]
-  revision = "80b54f2c7749e56f9e810ee9769971c8b0b7dad1"
+  revision = "6a24013056097858135d6cc959b9b5630c63c3f3"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
