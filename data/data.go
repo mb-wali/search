@@ -85,16 +85,16 @@ func getUserGroups(ctx context.Context, cfg *viper.Viper, user string) ([]string
 	return append(decoded.Groups, decoded.User), nil, nil
 }
 
-func extractSize(v map[string]interface{}) int {
-	extractedSize, ok := v["size"]
+func extractInt(v map[string]interface{}, field string, default_val int) int {
+	extracted, ok := v[field]
 	if !ok {
-		return 10
+		return default_val
 	}
-	floatSize, ok := extractedSize.(float64)
+	float, ok := extracted.(float64)
 	if !ok {
-		return 10
+		return default_val
 	}
-	return int(floatSize)
+	return int(float)
 }
 
 // GetSearchHandler returns a function which performs searches after translating an input query
@@ -128,7 +128,8 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			return
 		}
 
-		size := extractSize(v)
+		size := extractInt(v, "size", 10)
+		from := extractInt(v, "from", 0)
 
 		var clauses querydsl.GenericClause
 		qjson, _ := json.Marshal(query)
@@ -161,7 +162,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			logAndOutputErr(log, err, out)
 			return
 		}
-		res, err := e.Search().Size(size).Query(translated).Do(ctx)
+		res, err := e.Search().Size(size).From(from).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
