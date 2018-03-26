@@ -85,6 +85,18 @@ func getUserGroups(ctx context.Context, cfg *viper.Viper, user string) ([]string
 	return append(decoded.Groups, decoded.User), nil, nil
 }
 
+func extractSize(v map[string]interface{}) int {
+	extractedSize, ok := v["size"]
+	if !ok {
+		return 10
+	}
+	floatSize, ok := extractedSize.(float64)
+	if !ok {
+		return 10
+	}
+	return int(floatSize)
+}
+
 // GetSearchHandler returns a function which performs searches after translating an input query
 func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.Entry) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -115,6 +127,9 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			logAndOutputString(log, "Provided body did not contain a 'query' key", out)
 			return
 		}
+
+		size := extractSize(v)
+
 		var clauses querydsl.GenericClause
 		qjson, _ := json.Marshal(query)
 		err = json.Unmarshal(qjson, &clauses)
@@ -146,7 +161,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			logAndOutputErr(log, err, out)
 			return
 		}
-		res, err := e.Search().Query(translated).Do(ctx)
+		res, err := e.Search().Size(size).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
