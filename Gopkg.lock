@@ -13,14 +13,16 @@
   packages = [
     ".",
     "clause",
+    "clause/created",
     "clause/label",
     "clause/metadata",
+    "clause/modified",
     "clause/owner",
     "clause/path",
     "clause/permissions",
     "clauseutils"
   ]
-  revision = "6a24013056097858135d6cc959b9b5630c63c3f3"
+  revision = "578487597627f883f45fc17d78ae8257ae1b873d"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -152,6 +154,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "bdcaa9f9490bad2c5ecb3bf461330d00b25ba50512688e621b936e613029657c"
+  inputs-digest = "8b508664541839ab3ef16372ee7a4cd1f78edf7e78cacdf00a7e7073517c9b6c"
   solver-name = "gps-cdcl"
   solver-version = 1

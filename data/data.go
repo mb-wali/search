@@ -13,8 +13,10 @@ import (
 	"net/url"
 
 	"github.com/cyverse-de/querydsl"
+	"github.com/cyverse-de/querydsl/clause/created"
 	"github.com/cyverse-de/querydsl/clause/label"
 	"github.com/cyverse-de/querydsl/clause/metadata"
+	"github.com/cyverse-de/querydsl/clause/modified"
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
 	"github.com/cyverse-de/querydsl/clause/permissions"
@@ -30,6 +32,8 @@ func init() {
 	owner.Register(qd)
 	permissions.Register(qd)
 	metadata.Register(qd)
+	created.Register(qd)
+	modified.Register(qd)
 }
 
 // GetAllDocumentationHandler outputs documentation from the QueryDSL instance as JSON.
