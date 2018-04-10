@@ -2,6 +2,7 @@
 package elasticsearch
 
 import (
+	"github.com/pkg/errors"
 	"gopkg.in/olivere/elastic.v5"
 )
 
@@ -20,12 +21,13 @@ func NewElasticer(elasticsearchBase string, user string, password string, elasti
 	c, err := elastic.NewClient(elastic.SetSniff(false), elastic.SetURL(elasticsearchBase), elastic.SetBasicAuth(user, password))
 
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "Failed to create elastic client")
 	}
 
-	err = c.WaitForYellowStatus("10s")
+	wait := "10s"
+	err = c.WaitForYellowStatus(wait)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "Cluster did not report yellow or better status within %s", wait)
 	}
 
 	return &Elasticer{es: c, baseURL: elasticsearchBase, index: elasticsearchIndex}, nil
