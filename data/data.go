@@ -22,6 +22,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/permissions"
 
 	"github.com/cyverse-de/search/elasticsearch"
+	"gopkg.in/olivere/elastic.v5"
 )
 
 var qd = querydsl.New()
@@ -166,7 +167,25 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			logAndOutputErr(log, err, out)
 			return
 		}
-		res, err := e.Search().Size(size).From(from).Query(translated).Do(ctx)
+		usersJson, err := json.Marshal(users)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			logAndOutputErr(log, err, out)
+			return
+		}
+		permFieldScript := `
+		String perm = null;
+		for (up in params._source.userPermissions) {
+			for (user in ` + string(usersJson) + `) {
+				if (up.user == user && perm != 'own' && !(up.permission == 'read' && perm == 'write')) {
+					perm = up.permission
+				}
+			}
+		}
+		perm`
+		source := elastic.NewSearchSource().FetchSource(true).ScriptField(elastic.NewScriptField("permission", elastic.NewScriptInline(permFieldScript).Lang("painless")))
+		log.Info(source)
+		res, err := e.Search().SearchSource(source).Size(size).From(from).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
