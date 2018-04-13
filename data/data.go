@@ -184,7 +184,6 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		}
 		perm`
 		source := elastic.NewSearchSource().FetchSource(true).ScriptField(elastic.NewScriptField("permission", elastic.NewScriptInline(permFieldScript).Lang("painless")))
-		log.Info(source)
 		res, err := e.Search().SearchSource(source).Size(size).From(from).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
