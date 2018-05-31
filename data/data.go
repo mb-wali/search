@@ -20,6 +20,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/owner"
 	"github.com/cyverse-de/querydsl/clause/path"
 	"github.com/cyverse-de/querydsl/clause/permissions"
+	"github.com/cyverse-de/querydsl/clause/size"
 
 	"github.com/cyverse-de/search/elasticsearch"
 	"gopkg.in/olivere/elastic.v5"
@@ -35,6 +36,7 @@ func init() {
 	metadata.Register(qd)
 	created.Register(qd)
 	modified.Register(qd)
+	size.Register(qd)
 }
 
 // GetAllDocumentationHandler outputs documentation from the QueryDSL instance as JSON.

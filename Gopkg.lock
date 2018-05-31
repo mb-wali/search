@@ -20,9 +20,10 @@
     "clause/owner",
     "clause/path",
     "clause/permissions",
+    "clause/size",
     "clauseutils"
   ]
-  revision = "578487597627f883f45fc17d78ae8257ae1b873d"
+  revision = "a9340ba9e1508f897b43dc69f98e7cdc1cf7f990"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
@@ -154,6 +155,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "5c34a91b0cd2e6ffe70eb0244c2516e1cd4ce9980329840ddfe7efd351a679d8"
+  inputs-digest = "18e827a131dc41e91322c95bd2712c3213c67c24b80dd7dc8b12b7bfaf741ce8"
   solver-name = "gps-cdcl"
   solver-version = 1
