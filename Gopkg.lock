@@ -21,6 +21,7 @@
     "clause/path",
     "clause/permissions",
     "clause/size",
+    "clause/tag",
     "clauseutils"
   ]
   revision = "a9340ba9e1508f897b43dc69f98e7cdc1cf7f990"
@@ -155,6 +156,6 @@
 [solve-meta]
   analyzer-name = "dep"
   analyzer-version = 1
-  inputs-digest = "18e827a131dc41e91322c95bd2712c3213c67c24b80dd7dc8b12b7bfaf741ce8"
+  inputs-digest = "5e3f152e4a6328152b130ada081bfdef523c28ae301272dc9afb5b4595af3a7d"
   solver-name = "gps-cdcl"
   solver-version = 1
