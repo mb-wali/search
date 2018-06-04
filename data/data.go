@@ -21,6 +21,7 @@ import (
 	"github.com/cyverse-de/querydsl/clause/path"
 	"github.com/cyverse-de/querydsl/clause/permissions"
 	"github.com/cyverse-de/querydsl/clause/size"
+	"github.com/cyverse-de/search/clause/tag"
 
 	"github.com/cyverse-de/search/elasticsearch"
 	"gopkg.in/olivere/elastic.v5"
@@ -37,6 +38,7 @@ func init() {
 	created.Register(qd)
 	modified.Register(qd)
 	size.Register(qd)
+	tag.Register(qd)
 }
 
 // GetAllDocumentationHandler outputs documentation from the QueryDSL instance as JSON.
@@ -163,7 +165,10 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 
 		clauses.All = append(clauses.All, &querydsl.GenericClause{Clause: &querydsl.Clause{Type: "permissions", Args: map[string]interface{}{"users": users, "permission": "read", "permission_recurse": true, "exact": true}}})
 
-		translated, err := clauses.Translate(ctx, qd)
+		// Pass in user and elasticsearch connection
+		translateCtx := context.WithValue(context.WithValue(ctx, "user", users[len(users)-1]), "elasticer", e)
+
+		translated, err := clauses.Translate(translateCtx, qd)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
 			logAndOutputErr(log, err, out)
