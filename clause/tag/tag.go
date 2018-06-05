@@ -65,10 +65,6 @@ func TagProcessor(ctx context.Context, args map[string]interface{}) (elastic.Que
 
 	query := elastic.NewBoolQuery().Must(elastic.NewTermsQuery("id", tags...)).Filter(elastic.NewTermQuery("creator", user))
 
-	qs, _ := query.Source()
-	q, _ := json.Marshal(qs)
-	fmt.Println(string(q))
-
 	res, err := es.Search().Type("tag").Size(0).Query(query).Do(ctx)
 	if err != nil {
 		return nil, err
