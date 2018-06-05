@@ -6,8 +6,6 @@ import (
 	"errors"
 	"fmt"
 
-	"encoding/json"
-
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause"
 	basetag "github.com/cyverse-de/querydsl/clause/tag"
