@@ -4,6 +4,7 @@ package data
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/gorilla/mux"
 	"github.com/sirupsen/logrus"
@@ -94,6 +95,57 @@ func getUserGroups(ctx context.Context, cfg *viper.Viper, user string) ([]string
 	return append(decoded.Groups, decoded.User), nil, nil
 }
 
+func extractSort(v map[string]interface{}) ([]elastic.SortInfo, error) {
+	extracted, ok := v["sort"]
+	if !ok {
+		return nil, nil
+	}
+
+	sortList, ok := extracted.([]interface{})
+	if !ok {
+		return nil, errors.New("Sort key was not a list")
+	}
+
+	var ret []elastic.SortInfo
+	for _, sortR := range sortList {
+		sort, ok := sortR.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("Entry in sort list %+v was not a map", sortR)
+		}
+		var asc bool
+		orderR, ok := sort["order"]
+		if !ok {
+			return nil, errors.New("order must be provided")
+		}
+
+		order, ok := orderR.(string)
+		if !ok {
+			return nil, errors.New("order was not a string")
+		}
+
+		if order == "ascending" {
+			asc = true
+		} else if order == "descending" {
+			asc = false
+		} else {
+			return nil, fmt.Errorf("Order of %s was neither ascending nor descending", order)
+		}
+
+		fieldR, ok := sort["field"]
+		if !ok {
+			return nil, errors.New("No field was provided in a sort")
+		}
+
+		field, ok := fieldR.(string)
+		if !ok {
+			return nil, errors.New("Sort field was not a string")
+		}
+
+		ret = append(ret, elastic.SortInfo{Ascending: asc, Field: field})
+	}
+	return ret, nil
+}
+
 func extractInt(v map[string]interface{}, field string, default_val int) int {
 	extracted, ok := v[field]
 	if !ok {
@@ -139,6 +191,15 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 
 		size := extractInt(v, "size", 10)
 		from := extractInt(v, "from", 0)
+
+		sorts, err := extractSort(v)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			logAndOutputErr(log, err, out)
+			return
+		}
+
+		fmt.Println("%+v", sorts)
 
 		var clauses querydsl.GenericClause
 		qjson, _ := json.Marshal(query)
@@ -191,6 +252,15 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		}
 		perm`
 		source := elastic.NewSearchSource().FetchSource(true).ScriptField(elastic.NewScriptField("permission", elastic.NewScriptInline(permFieldScript).Lang("painless")))
+
+		for _, sort := range sorts {
+			source = source.SortWithInfo(sort)
+		}
+
+		ss, _ := source.Source()
+		s, _ := json.Marshal(ss)
+		fmt.Println(string(s))
+
 		res, err := e.Search().SearchSource(source).Size(size).From(from).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
