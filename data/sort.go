@@ -1,6 +1,7 @@
 package data
 
 import (
+	"errors"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
@@ -30,13 +31,17 @@ func extractSort(v map[string]interface{}) ([]elastic.SortInfo, error) {
 	for _, sort := range sorts {
 		var asc bool
 
+		if sort.Field == "" {
+			return nil, errors.New("No field was provided in sort")
+		}
+
 		if sort.Order == "ascending" {
 			asc = true
 		} else if sort.Order == "descending" {
 			asc = false
 
 		} else {
-			return nil, fmt.Errorf("Order of %s was neither ascending nor descending", sort.Order)
+			return nil, fmt.Errorf("Order of %q was neither ascending nor descending", sort.Order)
 		}
 
 		ret = append(ret, elastic.SortInfo{Ascending: asc, Field: sort.Field})
