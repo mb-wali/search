@@ -1,7 +1,6 @@
 package data
 
 import (
-	"errors"
 	"fmt"
 
 	"github.com/mitchellh/mapstructure"
@@ -12,6 +11,18 @@ type sortInput struct {
 	Order string
 	Field string
 }
+
+var (
+	knownFields = map[string]string{
+		"creator":      "creator",
+		"dateCreated":  "dateCreated",
+		"dateModified": "dateModified",
+		"fileSize":     "fileSize",
+		"id":           "id",
+		"label":        "label.keyword",
+		"path":         "path.keyword",
+	}
+)
 
 func extractSort(v map[string]interface{}) ([]elastic.SortInfo, error) {
 	extracted, ok := v["sort"]
@@ -31,8 +42,8 @@ func extractSort(v map[string]interface{}) ([]elastic.SortInfo, error) {
 	for _, sort := range sorts {
 		var asc bool
 
-		if sort.Field == "" {
-			return nil, errors.New("No field was provided in sort")
+		if knownFields[sort.Field] == "" {
+			return nil, fmt.Errorf("Unknown field type %q", sort.Field)
 		}
 
 		if sort.Order == "ascending" {
@@ -44,7 +55,7 @@ func extractSort(v map[string]interface{}) ([]elastic.SortInfo, error) {
 			return nil, fmt.Errorf("Order of %q was neither ascending nor descending", sort.Order)
 		}
 
-		ret = append(ret, elastic.SortInfo{Ascending: asc, Field: sort.Field})
+		ret = append(ret, elastic.SortInfo{Ascending: asc, Field: knownFields[sort.Field]})
 	}
 
 	return ret, nil
