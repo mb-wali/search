@@ -140,6 +140,13 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		size := extractInt(v, "size", 10)
 		from := extractInt(v, "from", 0)
 
+		sorts, err := extractSort(v)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			logAndOutputErr(log, err, out)
+			return
+		}
+
 		var clauses querydsl.GenericClause
 		qjson, _ := json.Marshal(query)
 		err = json.Unmarshal(qjson, &clauses)
@@ -191,6 +198,11 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		}
 		perm`
 		source := elastic.NewSearchSource().FetchSource(true).ScriptField(elastic.NewScriptField("permission", elastic.NewScriptInline(permFieldScript).Lang("painless")))
+
+		for _, sort := range sorts {
+			source = source.SortWithInfo(sort)
+		}
+
 		res, err := e.Search().SearchSource(source).Size(size).From(from).Query(translated).Do(ctx)
 		if err != nil {
 			w.WriteHeader(http.StatusBadRequest)
