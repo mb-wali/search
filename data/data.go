@@ -45,6 +45,16 @@ func init() {
 func GetAllDocumentationHandler(w http.ResponseWriter, r *http.Request) {
 	docs := make(map[string]interface{})
 	docs["clauses"] = qd.GetDocumentation()
+	sortFields := make([]string, len(knownFields))
+
+	i := 0
+	for k := range knownFields {
+		sortFields[i] = k
+		i++
+	}
+
+	docs["sortFields"] = sortFields
+
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	json.NewEncoder(w).Encode(docs)
 }
