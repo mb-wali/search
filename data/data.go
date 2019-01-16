@@ -134,7 +134,13 @@ func (r *QueryResponder) handleScrollId(users []string, sorts []elastic.SortInfo
 	}
 
 	res, err := r.es.Scroll().SearchSource(source).ScrollId(scrollId).Scroll(scroll).Do(r.ctx)
-	r.outputSearchResults(res, err)
+	if err != nil {
+		r.writer.WriteHeader(http.StatusBadRequest)
+		r.logAndOutputErr(err)
+		return
+	}
+
+	r.outputSearchResults(res)
 }
 
 func (r *QueryResponder) buildSearchSource(users []string, sorts []elastic.SortInfo) (*elastic.SearchSource, error) {
@@ -163,13 +169,7 @@ func (r *QueryResponder) buildSearchSource(users []string, sorts []elastic.SortI
 	return source, nil
 }
 
-func (r *QueryResponder) outputSearchResults(res *elastic.SearchResult, err error) {
-	if err != nil {
-		r.writer.WriteHeader(http.StatusBadRequest)
-		r.logAndOutputErr(err)
-		return
-	}
-
+func (r *QueryResponder) outputSearchResults(res *elastic.SearchResult) {
 	type resp struct {
 		*elastic.SearchHits
 		ScrollId string `json:"scroll_id,omitempty"`
@@ -307,7 +307,13 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		} else {
 			res, err = e.Search().SearchSource(source).Size(size).From(from).Query(translated).Do(hr.ctx)
 		}
-		hr.outputSearchResults(res, err)
+		if err != nil {
+			hr.writer.WriteHeader(http.StatusBadRequest)
+			hr.logAndOutputErr(err)
+			return
+		}
+
+		hr.outputSearchResults(res)
 	}
 }
 
