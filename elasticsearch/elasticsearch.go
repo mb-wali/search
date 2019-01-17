@@ -38,6 +38,11 @@ func (e *Elasticer) Search() *elastic.SearchService {
 	return e.es.Search().Index(e.index)
 }
 
+// Scroll returns an *elastic.ScrollService set to the right index, for further use
+func (e *Elasticer) Scroll() *elastic.ScrollService {
+	return e.es.Scroll().Index(e.index)
+}
+
 // Close calls out to the Stop method of the underlying elastic.Client
 func (e *Elasticer) Close() {
 	e.es.Stop()
