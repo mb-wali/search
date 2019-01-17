@@ -150,6 +150,7 @@ func (r *QueryResponder) buildSearchSource(users []string, sorts []elastic.SortI
 		r.logAndOutputErr(err)
 		return nil, err
 	}
+	// For each user+permission in the document and each user/group the requesting user is part of, check if the usernames match. If they do, check if the permission in the document is higher than the current calculated value for `perm` -- when it's already at 'own', it can't go higher, if it's 'write' then only 'read' can downgrade it, and otherwise it's either 'read' or null already and can always be used. Once the loops are done, return the calculated `perm`.
 	permFieldScript := `
 		String perm = null;
 		for (up in params._source.userPermissions) {
