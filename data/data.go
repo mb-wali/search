@@ -240,15 +240,6 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			return
 		}
 
-		var clauses querydsl.GenericClause
-		qjson, _ := json.Marshal(query)
-		err = json.Unmarshal(qjson, &clauses)
-		if err != nil {
-			hr.writer.WriteHeader(http.StatusBadRequest)
-			hr.logAndOutputErr(err)
-			return
-		}
-
 		users, ur, err := hr.getUserGroups()
 		if err != nil {
 			hr.writer.WriteHeader(http.StatusBadRequest)
@@ -276,9 +267,26 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 				hr.logAndOutputString("The scroll timeout provided could not be converted to a string")
 				return
 			}
+			hr.log.Infof("Got a scroll continuation from user %s (%s, %s)", user, scrollIdString, scrollString)
 			hr.handleScrollId(users, sorts, scrollIdString, scrollString)
 			return
 		}
+
+		var clauses querydsl.GenericClause
+		qjson, _ := json.Marshal(query)
+		err = json.Unmarshal(qjson, &clauses)
+		if err != nil {
+			hr.writer.WriteHeader(http.StatusBadRequest)
+			hr.logAndOutputErr(err)
+			return
+		}
+
+		var scrollSummary string
+		if hasScroll {
+			scrollSummary = fmt.Sprintf(" (scroll %s)", scroll)
+		}
+		summary := clauses.Summarize()
+		hr.log.Infof("Got a request from user %s%s: %s", user, scrollSummary, summary)
 
 		clauses.All = append(clauses.All, &querydsl.GenericClause{Clause: &querydsl.Clause{Type: "permissions", Args: map[string]interface{}{"users": users, "permission": "read", "permission_recurse": true, "exact": true}}})
 
