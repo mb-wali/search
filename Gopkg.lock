@@ -24,7 +24,7 @@
     "clause/tag",
     "clauseutils"
   ]
-  revision = "4b06a3a6daa95d2509f3af7b44e2ecf8fdebd1e6"
+  revision = "4708fbf4511347ff56a17c02bcb19286c3f216cc"
 
 [[projects]]
   name = "github.com/fsnotify/fsnotify"
