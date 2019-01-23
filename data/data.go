@@ -285,13 +285,13 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 		if hasScroll {
 			scrollSummary = fmt.Sprintf(" (scroll %s)", scroll)
 		}
-		summary := clauses.Summarize()
+		// Pass in user and elasticsearch connection
+		translateCtx := context.WithValue(context.WithValue(hr.ctx, "user", users[len(users)-1]), "elasticer", e)
+
+		summary := clauses.Summarize(translateCtx, qd)
 		hr.log.Infof("Got a request from user %s%s: %s", user, scrollSummary, summary)
 
 		clauses.All = append(clauses.All, &querydsl.GenericClause{Clause: &querydsl.Clause{Type: "permissions", Args: map[string]interface{}{"users": users, "permission": "read", "permission_recurse": true, "exact": true}}})
-
-		// Pass in user and elasticsearch connection
-		translateCtx := context.WithValue(context.WithValue(hr.ctx, "user", users[len(users)-1]), "elasticer", e)
 
 		translated, err := clauses.Translate(translateCtx, qd)
 		if err != nil {
