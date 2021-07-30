@@ -41,7 +41,7 @@ spec:
                 path: search.yaml
       containers:
       - name: search
-        image: discoenv/search
+        image: harbor.cyverse.org/de/search
         volumeMounts:
           - name: localtime
             mountPath: /etc/localtime
