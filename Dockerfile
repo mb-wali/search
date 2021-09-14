@@ -1,6 +1,7 @@
-FROM golang:1.11-alpine
+FROM golang:1.16-alpine
 
 COPY . /go/src/github.com/cyverse-de/search
+WORKDIR /go/src/github.com/cyverse-de/search
 ENV CGO_ENABLED=0
 RUN go install -v github.com/cyverse-de/search
 
