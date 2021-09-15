@@ -18,6 +18,21 @@ const (
 	typeKey = "tag"
 )
 
+type key int
+
+var userKey key
+var elasticerKey key
+
+func NewUserElasticContext(ctx context.Context, user string, elasticer *elasticsearch.Elasticer) context.Context {
+	return context.WithValue(context.WithValue(ctx, userKey, user), elasticerKey, elasticer)
+}
+
+func UserElasticFromContext(ctx context.Context) (string, *elasticsearch.Elasticer, bool) {
+	u, ok := ctx.Value(userKey).(string)
+	e, ok2 := ctx.Value(elasticerKey).(*elasticsearch.Elasticer)
+	return u, e, (ok && ok2)
+}
+
 var (
 	documentation = clause.ClauseDocumentation{
 		Summary: "Searches based on a set of provided tag IDs",
@@ -28,24 +43,15 @@ var (
 )
 
 func TagProcessor(ctx context.Context, args map[string]interface{}) (elastic.Query, error) {
-	userRaw := ctx.Value("user")
-	if userRaw == nil {
+	user, es, ok := UserElasticFromContext(ctx)
+	if !ok {
+		return nil, errors.New("Couldn't turn user into a string, or couldn't make elasticsearch connection into a real object")
+	}
+	if user == "" {
 		return nil, errors.New("No user was passed in the context")
 	}
-
-	user, ok := userRaw.(string)
-	if !ok {
-		return nil, errors.New("Couldn't turn user into a string")
-	}
-
-	esRaw := ctx.Value("elasticer")
-	if esRaw == nil {
+	if es == nil {
 		return nil, errors.New("No elasticsearch connection was passed in the context")
-	}
-
-	es, ok := esRaw.(*elasticsearch.Elasticer)
-	if !ok {
-		return nil, errors.New("Couldn't turn elasticsearch connection interface into a real object")
 	}
 
 	var realArgs basetag.TagArgs

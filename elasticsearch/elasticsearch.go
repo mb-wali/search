@@ -8,11 +8,9 @@ import (
 
 // Elasticer is a type used to interact with Elasticsearch
 type Elasticer struct {
-	es       *elastic.Client
-	baseURL  string
-	user     string
-	password string
-	index    string
+	es      *elastic.Client
+	baseURL string
+	index   string
 }
 
 // NewElasticer returns a pointer to an Elasticer instance that has already tested its connection

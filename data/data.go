@@ -5,12 +5,13 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"github.com/gorilla/mux"
-	"github.com/sirupsen/logrus"
-	"github.com/spf13/viper"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/gorilla/mux"
+	"github.com/sirupsen/logrus"
+	"github.com/spf13/viper"
 
 	"github.com/cyverse-de/querydsl"
 	"github.com/cyverse-de/querydsl/clause/created"
@@ -67,11 +68,12 @@ func GetAllDocumentationHandler(w http.ResponseWriter, r *http.Request) {
 	docs["sortFields"] = sortFields
 
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
-	json.NewEncoder(w).Encode(docs)
+	json.NewEncoder(w).Encode(docs) // nolint:errcheck
 }
 
 func (r *QueryResponder) logAndOutputString(err string) {
 	r.log.Error(err)
+	// nolint:errcheck
 	r.output.Encode(map[string]string{
 		"error": err,
 	})
@@ -79,6 +81,7 @@ func (r *QueryResponder) logAndOutputString(err string) {
 
 func (r *QueryResponder) logAndOutputErr(err error) {
 	r.log.Error(err)
+	// nolint:errcheck
 	r.output.Encode(map[string]string{
 		"error": err.Error(),
 	})
@@ -178,7 +181,7 @@ func (r *QueryResponder) outputSearchResults(res *elastic.SearchResult) {
 
 	response := resp{res.Hits, res.ScrollId}
 
-	r.output.Encode(response)
+	r.output.Encode(response) // nolint:errcheck
 }
 
 // GetSearchHandler returns a function which performs searches after translating an input query
@@ -250,7 +253,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			// passing along the response
 			defer ur.Body.Close()
 			hr.writer.WriteHeader(ur.StatusCode)
-			io.Copy(w, ur.Body)
+			io.Copy(w, ur.Body) // nolint:errcheck
 			return
 		}
 
@@ -286,7 +289,7 @@ func GetSearchHandler(cfg *viper.Viper, e *elasticsearch.Elasticer, log *logrus.
 			scrollSummary = fmt.Sprintf(" (scroll %s)", scroll)
 		}
 		// Pass in user and elasticsearch connection
-		translateCtx := context.WithValue(context.WithValue(hr.ctx, "user", users[len(users)-1]), "elasticer", e)
+		translateCtx := tag.NewUserElasticContext(hr.ctx, users[len(users)-1], e)
 
 		summary := clauses.Summarize(translateCtx, qd)
 		hr.log.Infof("Got a request from user %s%s: %s", user, scrollSummary, summary)
