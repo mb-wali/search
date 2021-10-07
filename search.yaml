@@ -1,0 +1,5 @@
+elasticsearch:
+  base: "http://es:9200"
+  username: "elastic"
+  password: "elastic"
+  # data-alias: index
